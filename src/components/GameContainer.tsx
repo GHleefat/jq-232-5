@@ -8,13 +8,12 @@ import { YardEditor } from "./YardEditor";
 import { Leaf, Pencil, RotateCcw } from "lucide-react";
 import type { CustomGridConfig } from "../types/game";
 
-export function GameContainer() {
-  const [viewMode, setViewMode] = useState<"game" | "editor">("game");
-  const [customConfig, setCustomConfig] = useState<
-    CustomGridConfig | undefined
-  >(undefined);
-  const [gameKey, setGameKey] = useState(0);
+interface GameViewProps {
+  customConfig?: CustomGridConfig;
+  onBackToEditor?: () => void;
+}
 
+function GameView({ customConfig, onBackToEditor }: GameViewProps) {
   const {
     gameState,
     score,
@@ -23,6 +22,44 @@ export function GameContainer() {
     formattedTime,
     completionPercent,
   } = useGameLogic(customConfig);
+
+  return (
+    <>
+      <div className="mb-5">
+        <StatusBar time={formattedTime} completion={completionPercent} />
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 items-start justify-center">
+        <div className="flex-shrink-0">
+          <GameCanvas gameState={gameState} />
+        </div>
+
+        <div className="w-full lg:w-64">
+          <ControlTips onMove={moveMower} />
+        </div>
+      </div>
+
+      <div className="mt-6 text-center text-sm text-green-700/60">
+        💡 小提示：尽量保持直线行驶，少走回头路，可以获得更高的评分和成就哦！
+      </div>
+
+      {gameState.completed && score && (
+        <CompletionPanel
+          score={score}
+          onRestart={resetGame}
+          onBackToEditor={onBackToEditor}
+        />
+      )}
+    </>
+  );
+}
+
+export function GameContainer() {
+  const [viewMode, setViewMode] = useState<"game" | "editor">("game");
+  const [customConfig, setCustomConfig] = useState<
+    CustomGridConfig | undefined
+  >(undefined);
+  const [gameKey, setGameKey] = useState(0);
 
   const handleStartGame = (config: CustomGridConfig) => {
     setCustomConfig(config);
@@ -81,32 +118,12 @@ export function GameContainer() {
           </button>
         </div>
 
-        <div className="mb-5" key={gameKey}>
-          <StatusBar time={formattedTime} completion={completionPercent} />
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6 items-start justify-center">
-          <div className="flex-shrink-0">
-            <GameCanvas gameState={gameState} />
-          </div>
-
-          <div className="w-full lg:w-64">
-            <ControlTips onMove={moveMower} />
-          </div>
-        </div>
-
-        <div className="mt-6 text-center text-sm text-green-700/60">
-          💡 小提示：尽量保持直线行驶，少走回头路，可以获得更高的评分和成就哦！
-        </div>
-      </div>
-
-      {gameState.completed && score && (
-        <CompletionPanel
-          score={score}
-          onRestart={resetGame}
+        <GameView
+          key={gameKey}
+          customConfig={customConfig}
           onBackToEditor={customConfig ? handleBackToEditor : undefined}
         />
-      )}
+      </div>
     </div>
   );
 }
